@@ -1,0 +1,29 @@
+groups:
+  - name: model_serving_alerts
+    rules:
+      - alert: HighLatency
+        expr: prediction_latency_seconds > 0.5
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High prediction latency detected"
+          description: "Prediction latency is {{ $value }}s for more than 1 minute"
+
+      - alert: HighErrorRate
+        expr: rate(prediction_errors_total[5m]) > 0.1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High prediction error rate"
+          description: "Error rate is {{ $value }} errors/second for more than 1 minute"
+
+      - alert: PredictionDrift
+        expr: abs(prediction_value - avg_over_time(prediction_value[1h])) > 2 * stddev_over_time(prediction_value[1h])
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prediction value anomaly detected"
+          description: "Prediction value {{ $value }} deviates significantly from historical average"

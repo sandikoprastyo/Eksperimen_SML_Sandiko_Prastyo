@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+.cortexkit
+plan.md
+mlruns/
+*.csv
+artifacts/
+artifacts_dagshub/
+.playwright-mcp/
+.env
