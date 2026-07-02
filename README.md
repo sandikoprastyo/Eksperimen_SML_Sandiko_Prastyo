@@ -218,14 +218,138 @@ python modelling_tuning.py
 MLFLOW_TRACKING_USERNAME=sandikoprastyo MLFLOW_TRACKING_PASSWORD=<token> python modelling_dagshub.py
 ```
 
-### 4. MLflow UI
+### 4. Docker Compose — Monitoring Stack
+
+Jalankan semua service (MLflow, model serving, Prometheus, Grafana) serentak:
 
 ```bash
-mlflow ui --host 0.0.0.0 --port 5001
-# Buka http://localhost:5001
+cd "Monitoring dan Logging"
+docker compose up -d
 ```
 
-### 5. Serving & Monitoring
+| Service | Port | Akses |
+|---------|------|-------|
+| **MLflow Tracking Server** | `:5000` | [http://localhost:5000](http://localhost:5000) |
+| **Model Serving (FastAPI)** | `:8000` | `/health`, `/predict`, `/metrics`, `/docs` |
+| **Prometheus Exporter** | `:8001` | `/metrics` (sintetik) |
+| **Prometheus** | `:9090` | [http://localhost:9090](http://localhost:9090) |
+| **Grafana** | `:3000` | [http://localhost:3000](http://localhost:3000) — `admin / admin` |
+
+### 5. API Contract
+
+Base URL: `http://localhost:8000`
+
+#### 5.1 Health Check
+
+```bash
+curl -X GET http://localhost:8000/health
+```
+
+Response:
+```json
+{
+  "status": "healthy",
+  "model_loaded": true
+}
+```
+
+#### 5.2 Prediction
+
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"features": [0.5, 0.2, 0.8, 0.1, 0.6, 0.3, 0.9, 0.4, 0.7, 0.2, 0.5, 0.3, 0.8, 0.6, 0.1, 0.4, 0.9, 0.2, 0.7, 0.5, 0.3, 0.8, 0.6, 0.4, 0.1, 0.9, 0.2, 0.7, 0.5, 0.3, 0.8, 0.6, 0.4, 0.1, 0.9, 0.2, 0.7, 0.5, 0.3, 0.8, 0.6, 0.4, 0.1, 0.9, 0.2, 0.7, 0.5, 0.3, 0.8, 0.6, 0.4, 0.1, 0.9, 0.2, 0.7, 0.5, 0.3, 0.8, 0.6]}'
+```
+
+Response:
+```json
+{
+  "predicted_goals": 0.0817,
+  "predicted_position": 0,
+  "position_label": "Defender",
+  "confidence": 0.5322,
+  "latency_seconds": 0.0246
+}
+```
+
+#### 5.3 Prometheus Metrics
+
+```bash
+curl -X GET http://localhost:8000/metrics
+```
+
+Response (sample):
+```
+# HELP prediction_latency_seconds Latency of prediction requests
+# TYPE prediction_latency_seconds histogram
+prediction_latency_seconds_bucket{le="0.01"} 0.0
+prediction_latency_seconds_bucket{le="0.05"} 1.0
+prediction_latency_seconds_bucket{le="0.1"} 1.0
+prediction_latency_seconds_bucket{le="+Inf"} 1.0
+prediction_latency_seconds_count 1.0
+# HELP prediction_requests_total Total prediction requests
+# TYPE prediction_requests_total counter
+prediction_requests_total 6.0
+```
+
+#### 5.4 MLflow Tracking API
+
+```bash
+curl -X GET http://localhost:5000/api/2.0/mlflow/experiments/list
+```
+
+Response:
+```json
+{
+  "experiments": [
+    {
+      "experiment_id": "0",
+      "name": "Default",
+      "artifact_location": "/mlflow/mlruns/0",
+      "lifecycle_stage": "active"
+    }
+  ]
+}
+```
+
+```bash
+curl -X GET http://localhost:5000/api/2.0/mlflow/runs/search \
+  -H "Content-Type: application/json" \
+  -d '{"experiment_ids": ["0"], "max_results": 1}'
+```
+
+Response:
+```json
+{
+  "runs": [
+    {
+      "info": {
+        "run_id": "e875be6f544a41d293523945d387b360",
+        "experiment_id": "0",
+        "status": "FINISHED",
+        "start_time": 1730000000000,
+        "end_time": 1730000010000
+      },
+      "data": {
+        "metrics": {
+          "reg_mse": 0.0368,
+          "reg_mae": 0.06,
+          "reg_r2": 0.4174,
+          "cls_accuracy": 0.9642,
+          "cls_f1": 0.9642
+        },
+        "params": {
+          "model_type": "RandomForestMultiOutput",
+          "n_estimators": "100",
+          "test_size": "0.2"
+        }
+      }
+    }
+  ]
+}
+```
+
+### 6. Manual Serving (tanpa Docker)
 
 ```bash
 # Start Prometheus exporter (port 8001)
@@ -239,7 +363,7 @@ python "Monitoring dan Logging/7.Inference.py"
 
 # Prometheus: http://localhost:8001/metrics
 # Grafana: http://localhost:3000 (admin/admin)
-# API: http://localhost:8000/docs
+# API docs: http://localhost:8000/docs
 ```
 
 ---
@@ -262,11 +386,21 @@ SMSML_Sandiko_Prastyo.zip
 └── Monitoring dan Logging/
     ├── 1.bukti_serving/                     # Screenshot serving
     ├── 2.prometheus.yml                     # Konfigurasi Prometheus
-    ├── 3.prometheus_exporter.py             # Exporter metrik
+    ├── 3.prometheus_exporter.py             # Exporter metrik sintetik
     ├── 4.bukti monitoring Prometheus/       # 10+ metrik Prometheus
     ├── 5.bukti monitoring Grafana/          # Dashboard Grafana
     ├── 6.bukti alerting Grafana/            # 3 rules + notifikasi
-    └── 7.Inference.py                       # Client inference
+    ├── 7.Inference.py                       # Client inference
+    ├── model_serving.py                     # FastAPI serving dengan Prometheus metrics
+    ├── alert_rules.yml                      # Alerting rules (HighLatency, HighErrorRate, PredictionDrift)
+    ├── docker-compose.yml                   # Orkestrasi MLflow + serving + Prometheus + Grafana
+    ├── Dockerfile.serving                   # Docker image untuk model serving
+    ├── Dockerfile.exporter                  # Docker image untuk prometheus exporter
+    └── grafana/
+        ├── datasources/datasource.yml       # Auto-provision datasource Prometheus
+        └── dashboards/
+            ├── dashboard.yml                # Auto-provision dashboard provider
+            └── model_monitoring.json        # Dashboard Grafana (11 panel)
 ```
 
 ---
