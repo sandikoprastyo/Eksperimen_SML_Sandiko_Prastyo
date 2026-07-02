@@ -1,1 +1,2 @@
 https://github.com/sandikoprastyo/Eksperimen_SML_Sandiko_Prastyo
+https://dagshub.com/sandikoprastyo/Membangun_Model_SML
