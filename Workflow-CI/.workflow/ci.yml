@@ -37,15 +37,11 @@ jobs:
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
           echo "Got run_id: $run_id"
 
-      - name: Install Python dependencies
-        run: pip install gdown
-
       - name: Upload to Google Drive
-        run: |
-          cd MLProject
-          zip -r model_artifacts.zip model_artifacts/
-          gdown --folder "${{ secrets.GDRIVE_FOLDER_ID }}" --remaining-ok || true
-          echo "Uploaded model_artifacts.zip to Google Drive"
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-artifacts
+          path: MLProject/model_artifacts/
 
       - name: Build Docker Model
         run: |
