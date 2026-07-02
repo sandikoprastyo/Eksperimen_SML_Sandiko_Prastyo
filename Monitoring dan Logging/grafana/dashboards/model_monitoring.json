@@ -1,0 +1,121 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "title": "FIFA Player Scout - Model Monitoring",
+  "tags": ["ml", "fifa", "monitoring"],
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [
+    {
+      "title": "Prediction Latency (p99)",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(prediction_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p99 latency"
+        }
+      ]
+    },
+    {
+      "title": "Prediction Latency (avg)",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "rate(prediction_latency_seconds_sum[5m]) / rate(prediction_latency_seconds_count[5m])",
+          "legendFormat": "avg latency"
+        }
+      ]
+    },
+    {
+      "title": "Request & Error Rate",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [
+        {
+          "expr": "rate(prediction_requests_total[5m])",
+          "legendFormat": "requests/s"
+        },
+        {
+          "expr": "rate(prediction_errors_total[5m])",
+          "legendFormat": "errors/s"
+        }
+      ]
+    },
+    {
+      "title": "Predicted Goals Value",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [
+        {
+          "expr": "prediction_value",
+          "legendFormat": "goals"
+        }
+      ]
+    },
+    {
+      "title": "Model Confidence",
+      "type": "gauge",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 16},
+      "targets": [
+        {
+          "expr": "model_confidence"
+        }
+      ],
+      "options": {
+        "min": 0,
+        "max": 1,
+        "orientation": "auto"
+      }
+    },
+    {
+      "title": "Goals Statistics (Window)",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 16},
+      "targets": [
+        {
+          "expr": "goals_mean",
+          "legendFormat": "mean"
+        },
+        {
+          "expr": "goals_std",
+          "legendFormat": "std"
+        }
+      ]
+    },
+    {
+      "title": "Model Memory Usage",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 16},
+      "targets": [
+        {
+          "expr": "model_memory_usage_bytes",
+          "legendFormat": "memory"
+        }
+      ]
+    },
+    {
+      "title": "Predictions by Position",
+      "type": "piechart",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+      "targets": [
+        {
+          "expr": "sum(increase(predictions_by_position_total[1h])) by (position)",
+          "legendFormat": "__auto"
+        }
+      ]
+    },
+    {
+      "title": "Request Size",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+      "targets": [
+        {
+          "expr": "rate(request_size_bytes_sum[5m]) / rate(request_size_bytes_count[5m])",
+          "legendFormat": "avg request size"
+        }
+      ]
+    }
+  ]
+}

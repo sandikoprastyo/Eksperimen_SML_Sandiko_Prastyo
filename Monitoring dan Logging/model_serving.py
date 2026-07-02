@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 import joblib
@@ -8,7 +9,15 @@ from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTEN
 from starlette.responses import Response
 from pydantic import BaseModel
 from typing import List, Optional
+import mlflow
+import mlflow.sklearn
+from mlflow.tracking import MlflowClient
 
+
+mlruns_paths = [
+    os.path.join(os.path.dirname(__file__), '..', 'Membangun_model', 'mlruns'),
+    os.path.join(os.path.dirname(__file__), '..', 'Workflow-CI', 'MLProject', 'mlruns'),
+]
 
 app = FastAPI(title='FIFA Player Performance Predictor')
 
@@ -31,8 +40,37 @@ predict_position_counter = Counter(
     ['position']
 )
 
-import os
 model_dir = os.path.join(os.path.dirname(__file__), '..', 'Membangun_model')
+
+scaler = None
+label_encoder = None
+regressor_model = None
+classifier_model = None
+
+for path in mlruns_paths:
+    tracking_uri = f'file://{path}'
+    mlflow.set_tracking_uri(tracking_uri)
+    client = MlflowClient(tracking_uri=tracking_uri)
+    try:
+        experiments = client.search_experiments()
+        for exp in experiments:
+            runs = client.search_runs(exp.experiment_id, order_by=['start_time DESC'], max_results=1)
+            if runs:
+                run = runs[0]
+                run_id = run.info.run_id
+                reg_uri = f'runs:/{run_id}/regressor_model'
+                cls_uri = f'runs:/{run_id}/classifier_model'
+                try:
+                    regressor_model = mlflow.sklearn.load_model(reg_uri)
+                    classifier_model = mlflow.sklearn.load_model(cls_uri)
+                    print(f'Loaded models from {tracking_uri} / run {run_id}')
+                    break
+                except Exception:
+                    continue
+        if regressor_model is not None:
+            break
+    except Exception:
+        continue
 
 try:
     scaler = joblib.load(os.path.join(model_dir, 'fifa_dataset_preprocessing', 'scaler.pkl'))
@@ -40,14 +78,13 @@ try:
     print(f'Loaded scaler and label encoder from {model_dir}')
 except Exception as e:
     print(f'Warning: Could not load artifacts: {e}')
-    scaler = None
-    label_encoder = None
 
-import mlflow
-import mlflow.sklearn
-
-mlflow_registry = {}
-mlflow_client = mlflow.tracking.MlflowClient()
+position_labels = ['Unknown']
+if label_encoder is not None:
+    try:
+        position_labels = label_encoder.classes_.tolist()
+    except Exception:
+        pass
 
 
 class PredictionInput(BaseModel):
@@ -78,9 +115,18 @@ async def predict(input_data: PredictionInput, request: Request):
         start_time = time.time()
         features = np.array(input_data.features).reshape(1, -1)
 
-        reg_pred = 0.0
-        cls_pred = 0
-        confidence = 0.0
+        if regressor_model is not None:
+            reg_pred = float(regressor_model.predict(features)[0])
+        else:
+            reg_pred = 0.0
+
+        if classifier_model is not None:
+            cls_pred = int(classifier_model.predict(features)[0])
+            proba = classifier_model.predict_proba(features)
+            confidence = float(np.max(proba[0]))
+        else:
+            cls_pred = 0
+            confidence = 0.0
 
         latency = time.time() - start_time
 
@@ -88,14 +134,23 @@ async def predict(input_data: PredictionInput, request: Request):
         predict_position.set(cls_pred)
         model_confidence_gauge.set(confidence)
 
-        position_labels = label_encoder.inverse_transform([cls_pred])[0] if label_encoder is not None else str(cls_pred)
-        predict_position_counter.labels(position=position_labels).inc()
+        pos_label = position_labels[cls_pred] if cls_pred < len(position_labels) else 'Unknown'
+        if label_encoder is not None:
+            try:
+                pos_label = label_encoder.inverse_transform([cls_pred])[0]
+            except Exception:
+                pass
+
+        predict_position_counter.labels(position=pos_label).inc()
+
+        goals_mean_gauge.set(reg_pred)
+        goals_std_gauge.set(abs(reg_pred * 0.3))
 
         return {
-            'predicted_goals': float(reg_pred),
-            'predicted_position': int(cls_pred),
-            'position_label': position_labels,
-            'confidence': float(confidence),
+            'predicted_goals': reg_pred,
+            'predicted_position': cls_pred,
+            'position_label': pos_label,
+            'confidence': confidence,
             'latency_seconds': latency
         }
     except Exception as e:

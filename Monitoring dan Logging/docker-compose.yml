@@ -1,0 +1,55 @@
+services:
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.19.0
+    container_name: mlflow-server
+    ports:
+      - "5000:5000"
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri /mlflow/mlruns --default-artifact-root /mlflow/mlruns
+    volumes:
+      - ../Membangun_model/mlruns:/mlflow/mlruns
+      - ../Workflow-CI/MLProject/mlruns:/mlflow/mlruns_ci
+
+  model-serving:
+    build:
+      context: .
+      dockerfile: Dockerfile.serving
+    container_name: model-serving
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../Membangun_model:/app/Membangun_model
+      - ../Workflow-CI/MLProject:/app/MLProject
+    depends_on:
+      - mlflow
+
+  prometheus-exporter:
+    build:
+      context: .
+      dockerfile: Dockerfile.exporter
+    container_name: prometheus-exporter
+    ports:
+      - "8001:8001"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./2.prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./alert_rules.yml:/etc/prometheus/alert_rules.yml
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=
+    volumes:
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
