@@ -233,8 +233,7 @@ docker compose up -d
 | **Model Serving (FastAPI)** | `:8000` | `/health`, `/predict`, `/metrics`, `/docs` |
 | **Prometheus Exporter** | `:8001` | `/metrics` (sintetik) |
 | **Prometheus** | `:9090` | [http://localhost:9090](http://localhost:9090) |
-| **Grafana (Docker)** | `:3001` | [http://localhost:3001](http://localhost:3001) — `admin / admin` |
-| **Grafana (native)** | `:3000` | Native Grafana di host (jika ada) |
+| **Grafana** | `:3001` | [http://localhost:3001](http://localhost:3001) — `admin / admin` |
 
 ### 5. API Contract
 
@@ -363,7 +362,7 @@ python "Monitoring dan Logging/model_serving.py"
 python "Monitoring dan Logging/7.Inference.py"
 
 # Prometheus: http://localhost:8001/metrics
-# Grafana: http://localhost:3000 (admin/admin)
+# Grafana: http://localhost:3001 (admin/admin)
 # API docs: http://localhost:8000/docs
 ```
 
