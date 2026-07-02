@@ -7,6 +7,7 @@ __pycache__/
 plan.md
 mlruns/
 *.csv
+!Workflow-CI/MLProject/fifa_dataset_preprocessing/fifa_data_clean.csv
 artifacts/
 artifacts_dagshub/
 .playwright-mcp/
