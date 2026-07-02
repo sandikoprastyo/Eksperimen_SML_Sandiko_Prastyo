@@ -37,7 +37,7 @@ jobs:
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
           echo "Got run_id: $run_id"
 
-      - name: Upload to Google Drive
+      - name: Upload to Github
         uses: actions/upload-artifact@v4
         with:
           name: model-artifacts
