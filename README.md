@@ -264,11 +264,11 @@ curl -X POST http://localhost:8000/predict \
 Response:
 ```json
 {
-  "predicted_goals": 0.0817,
-  "predicted_position": 0,
-  "position_label": "Defender",
-  "confidence": 0.5322,
-  "latency_seconds": 0.0246
+  "predicted_goals": 0.1236,
+  "predicted_position": 3,
+  "position_label": "Midfielder",
+  "confidence": 0.72,
+  "latency_seconds": 0.0771
 }
 ```
 
@@ -292,62 +292,15 @@ prediction_latency_seconds_count 1.0
 prediction_requests_total 6.0
 ```
 
-#### 5.4 MLflow Tracking API
+#### 5.4 MLflow UI
 
 ```bash
-curl -X GET http://localhost:5001/api/2.0/mlflow/experiments/list
+# Buka browser
+open http://localhost:5001
 ```
 
-Response:
-```json
-{
-  "experiments": [
-    {
-      "experiment_id": "0",
-      "name": "Default",
-      "artifact_location": "/mlflow/mlruns/0",
-      "lifecycle_stage": "active"
-    }
-  ]
-}
-```
-
-```bash
-curl -X GET http://localhost:5001/api/2.0/mlflow/runs/search \
-  -H "Content-Type: application/json" \
-  -d '{"experiment_ids": ["0"], "max_results": 1}'
-```
-
-Response:
-```json
-{
-  "runs": [
-    {
-      "info": {
-        "run_id": "e875be6f544a41d293523945d387b360",
-        "experiment_id": "0",
-        "status": "FINISHED",
-        "start_time": 1730000000000,
-        "end_time": 1730000010000
-      },
-      "data": {
-        "metrics": {
-          "reg_mse": 0.0368,
-          "reg_mae": 0.06,
-          "reg_r2": 0.4174,
-          "cls_accuracy": 0.9642,
-          "cls_f1": 0.9642
-        },
-        "params": {
-          "model_type": "RandomForestMultiOutput",
-          "n_estimators": "100",
-          "test_size": "0.2"
-        }
-      }
-    }
-  ]
-}
-```
+> **Catatan**: Image MLflow `ghcr.io/mlflow/mlflow:v2.19.0` di docker-compose hanya menyajikan Web UI (`:5001`).  
+> REST API (`/api/2.0/mlflow/`) tidak tersedia di image ini. Untuk akses API, gunakan `mlflow server` dari native Python.
 
 ### 6. Manual Serving (tanpa Docker)
 
@@ -411,3 +364,4 @@ SMSML_Sandiko_Prastyo.zip
 2. **Docker Hub**: Credentials disimpan di GitHub Secrets (`DOCKER_USERNAME`, `DOCKER_PASSWORD`)
 3. **Grafana Dashboard**: Nama dashboard harus `sandiko prastyo` (sesuai username Dicoding)
 4. **Dataset**: Ukuran 16 MB — gunakan Git LFS jika diperlukan
+5. **MLflow API di Docker**: REST API tidak tersedia di image `ghcr.io/mlflow/mlflow` — akses UI via browser `http://localhost:5001`
