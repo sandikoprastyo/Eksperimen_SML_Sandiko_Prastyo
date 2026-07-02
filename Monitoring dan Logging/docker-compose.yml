@@ -51,5 +51,6 @@ services:
     volumes:
       - ./grafana/datasources:/etc/grafana/provisioning/datasources
       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/alerting:/etc/grafana/provisioning/alerting
     depends_on:
       - prometheus

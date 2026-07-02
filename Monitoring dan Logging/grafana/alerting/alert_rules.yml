@@ -1,0 +1,68 @@
+apiVersion: 1
+groups:
+  - name: model_serving_alerts
+    folder: Model Monitoring Alerts
+    interval: 10s
+    rules:
+      - uid: high_latency_alert
+        title: HighLatency
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: prediction_latency_seconds_count > 100
+              intervalMs: 10000
+              maxDataPoints: 100
+        no_data_state: NoData
+        exec_err_state: Alerting
+        for: 1m
+        annotations:
+          summary: "High prediction latency detected (>0.5s for 1m)"
+        labels:
+          severity: warning
+
+      - uid: high_error_rate_alert
+        title: HighErrorRate
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: rate(prediction_errors_total[1m]) > 0.1
+              intervalMs: 10000
+              maxDataPoints: 100
+        no_data_state: NoData
+        exec_err_state: Alerting
+        for: 1m
+        annotations:
+          summary: "High error rate detected (>0.1/s for 1m)"
+        labels:
+          severity: critical
+
+      - uid: prediction_drift_alert
+        title: PredictionDrift
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: abs(prediction_value - avg_over_time(prediction_value[1h])) > 2 * stddev_over_time(prediction_value[1h])
+              intervalMs: 10000
+              maxDataPoints: 100
+        no_data_state: NoData
+        exec_err_state: Alerting
+        for: 2m
+        annotations:
+          summary: "Prediction drift detected (deviation >2 std from 1h avg)"
+        labels:
+          severity: warning
