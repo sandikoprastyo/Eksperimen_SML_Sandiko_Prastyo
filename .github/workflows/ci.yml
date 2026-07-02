@@ -29,12 +29,12 @@ jobs:
           pip install pandas numpy scikit-learn mlflow==2.19.0
 
       - name: Run mlflow project
-        run: mlflow run MLProject --env-manager local
+        run: cd MLProject && python modelling.py
 
       - name: Get latest MLflow run_id
         id: get_run_id
         run: |
-          run_id=$(grep -oP 'run_id: \K.*' MLProject/model_artifacts/mlflow_run.txt)
+          run_id=$(grep -o 'run_id: .*' MLProject/model_artifacts/mlflow_run.txt | cut -d' ' -f2)
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
           echo "Got run_id: $run_id"
 
