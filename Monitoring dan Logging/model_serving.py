@@ -1,4 +1,5 @@
 import os
+import glob
 import pandas as pd
 import numpy as np
 import joblib
@@ -14,10 +15,33 @@ import mlflow.sklearn
 from mlflow.tracking import MlflowClient
 
 
-mlruns_paths = [
-    os.path.join(os.path.dirname(__file__), '..', 'Membangun_model', 'mlruns'),
-    os.path.join(os.path.dirname(__file__), '..', 'Workflow-CI', 'MLProject', 'mlruns'),
+BASE = os.path.dirname(os.path.abspath(__file__))
+HOST_PREFIXES = [
+    '/Volumes/SSD_EXT/Dicoding/Membangun%20Sistem%20Machine%20Learning/submission/',
+    '/Volumes/SSD_EXT/Dicoding/Membangun Sistem Machine Learning/submission/',
 ]
+
+mlruns_paths = [
+    os.path.join(BASE, '..', 'Membangun_model', 'mlruns'),
+    os.path.join(BASE, '..', 'Workflow-CI', 'MLProject', 'mlruns'),
+]
+
+
+def fix_mlflow_artifact_paths(root_dir):
+    for meta_path in glob.glob(os.path.join(root_dir, '**', 'meta.yaml'), recursive=True):
+        with open(meta_path) as f:
+            content = f.read()
+        for prefix in HOST_PREFIXES:
+            if prefix in content:
+                new_content = content.replace(prefix, root_dir + '/')
+                with open(meta_path, 'w') as f:
+                    f.write(new_content)
+                print(f'Fixed artifact paths in {meta_path}')
+                break
+
+for p in mlruns_paths:
+    if os.path.isdir(p):
+        fix_mlflow_artifact_paths(p)
 
 app = FastAPI(title='FIFA Player Performance Predictor')
 
@@ -106,7 +130,6 @@ async def metrics():
 
 
 @app.post('/predict')
-@predict_latency.time()
 async def predict(input_data: PredictionInput, request: Request):
     predict_requests.inc()
     requests_in_progress.inc()
@@ -129,6 +152,7 @@ async def predict(input_data: PredictionInput, request: Request):
             confidence = 0.0
 
         latency = time.time() - start_time
+        predict_latency.observe(latency)
 
         predict_value.set(reg_pred)
         predict_position.set(cls_pred)

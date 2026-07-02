@@ -17,8 +17,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ../Membangun_model:/app/Membangun_model
-      - ../Workflow-CI/MLProject:/app/MLProject
+      - ../Membangun_model:/Membangun_model
+      - ../Workflow-CI/MLProject:/Workflow-CI/MLProject
     depends_on:
       - mlflow
 
@@ -43,7 +43,7 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin

@@ -233,7 +233,8 @@ docker compose up -d
 | **Model Serving (FastAPI)** | `:8000` | `/health`, `/predict`, `/metrics`, `/docs` |
 | **Prometheus Exporter** | `:8001` | `/metrics` (sintetik) |
 | **Prometheus** | `:9090` | [http://localhost:9090](http://localhost:9090) |
-| **Grafana** | `:3000` | [http://localhost:3000](http://localhost:3000) — `admin / admin` |
+| **Grafana (Docker)** | `:3001` | [http://localhost:3001](http://localhost:3001) — `admin / admin` |
+| **Grafana (native)** | `:3000` | Native Grafana di host (jika ada) |
 
 ### 5. API Contract
 
