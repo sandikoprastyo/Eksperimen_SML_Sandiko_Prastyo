@@ -1,0 +1,12 @@
+name: fifa-player-scout
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12.7
+  - pandas=2.3.3
+  - numpy=2.1.3
+  - scikit-learn=1.5.2
+  - pip
+  - pip:
+    - mlflow==2.19.0

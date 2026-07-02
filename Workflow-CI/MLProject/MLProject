@@ -1,0 +1,12 @@
+name: fifa-player-scout
+
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    parameters:
+      data_path: {type: str, default: "fifa_dataset_preprocessing/fifa_data_clean.csv"}
+    command: "python modelling.py"
+
+  train:
+    command: "python modelling.py"

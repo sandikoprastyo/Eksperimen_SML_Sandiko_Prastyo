@@ -139,7 +139,7 @@ MLProject/
 **Skilled**: Upload artifacts ke GitHub Releases
 **Advanced**: Build Docker image via `mlflow build-docker` → Push ke Docker Hub
 
-**Docker Image**: `sandikoprastyo/fifa-player-scout`
+**Docker Image**: `sandicko/fifa-player-scout`
 
 ---
 
