@@ -1,0 +1,7 @@
+{
+    "predicted_goals": 0.12357834046585739,
+    "predicted_position": 3,
+    "position_label": "Midfielder",
+    "confidence": 0.72,
+    "latency_seconds": 0.04074978828430176
+}
