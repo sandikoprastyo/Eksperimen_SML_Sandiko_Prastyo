@@ -29,12 +29,12 @@ jobs:
           pip install pandas numpy scikit-learn mlflow==2.19.0
 
       - name: Run mlflow project
-        run: cd MLProject && python modelling.py
+        run: cd Workflow-CI/MLProject && python modelling.py
 
       - name: Get latest MLflow run_id
         id: get_run_id
         run: |
-          run_id=$(grep -o 'run_id: .*' MLProject/model_artifacts/mlflow_run.txt | cut -d' ' -f2)
+          run_id=$(grep -o 'run_id: .*' Workflow-CI/MLProject/model_artifacts/mlflow_run.txt | cut -d' ' -f2)
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
           echo "Got run_id: $run_id"
 
@@ -43,14 +43,14 @@ jobs:
 
       - name: Upload to Google Drive
         run: |
-          cd MLProject
+          cd Workflow-CI/MLProject
           zip -r model_artifacts.zip model_artifacts/
           gdown --folder "${{ secrets.GDRIVE_FOLDER_ID }}" --remaining-ok || true
           echo "Uploaded model_artifacts.zip to Google Drive"
 
       - name: Build Docker Model
         run: |
-          cd MLProject
+          cd Workflow-CI/MLProject
           mlflow models build-docker \
             --model-uri "runs:/${{ steps.get_run_id.outputs.run_id }}/regressor_model" \
             --name "fifa-player-scout"
