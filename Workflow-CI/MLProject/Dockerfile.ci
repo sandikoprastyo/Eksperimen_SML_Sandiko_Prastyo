@@ -1,0 +1,19 @@
+FROM python:3.12-slim
+
+ARG RUN_ID
+ARG MLFLOW_TRACKING_URI=/opt/ml/mlruns
+
+WORKDIR /opt/ml
+
+RUN pip install --no-cache-dir mlflow==2.19.0 pandas numpy scikit-learn
+
+COPY mlruns $MLFLOW_TRACKING_URI
+
+ENV MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI
+
+EXPOSE 5000
+
+CMD mlflow models serve \
+    --model-uri "runs:/${RUN_ID}/regressor_model" \
+    --port 5000 \
+    --host 0.0.0.0
