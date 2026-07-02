@@ -229,7 +229,7 @@ docker compose up -d
 
 | Service | Port | Akses |
 |---------|------|-------|
-| **MLflow Tracking Server** | `:5000` | [http://localhost:5000](http://localhost:5000) |
+| **MLflow Tracking Server** | `:5001` | [http://localhost:5001](http://localhost:5001) |
 | **Model Serving (FastAPI)** | `:8000` | `/health`, `/predict`, `/metrics`, `/docs` |
 | **Prometheus Exporter** | `:8001` | `/metrics` (sintetik) |
 | **Prometheus** | `:9090` | [http://localhost:9090](http://localhost:9090) |
@@ -295,7 +295,7 @@ prediction_requests_total 6.0
 #### 5.4 MLflow Tracking API
 
 ```bash
-curl -X GET http://localhost:5000/api/2.0/mlflow/experiments/list
+curl -X GET http://localhost:5001/api/2.0/mlflow/experiments/list
 ```
 
 Response:
@@ -313,7 +313,7 @@ Response:
 ```
 
 ```bash
-curl -X GET http://localhost:5000/api/2.0/mlflow/runs/search \
+curl -X GET http://localhost:5001/api/2.0/mlflow/runs/search \
   -H "Content-Type: application/json" \
   -d '{"experiment_ids": ["0"], "max_results": 1}'
 ```
