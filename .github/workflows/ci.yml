@@ -1,1 +1,68 @@
 
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.12.7
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.7'
+
+      - name: Check Env
+        run: |
+          python --version
+          pip --version
+          which python
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy scikit-learn mlflow==2.19.0
+
+      - name: Run mlflow project
+        env:
+          MLFLOW_TRACKING_URI: ${{ github.workspace }}/Workflow-CI/MLProject/mlruns
+        run: mlflow run Workflow-CI/MLProject --env-manager local
+
+      - name: Get latest MLflow run_id
+        id: get_run_id
+        run: |
+          run_id=$(grep -o 'run_id: .*' Workflow-CI/MLProject/model_artifacts/mlflow_run.txt | cut -d' ' -f2)
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "Got run_id: $run_id"
+
+      - name: Upload to Github
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-artifacts
+          path: Workflow-CI/MLProject/model_artifacts/
+
+      - name: Build Docker Model
+        run: |
+          cd Workflow-CI/MLProject
+          docker build \
+            --build-arg RUN_ID=${{ steps.get_run_id.outputs.run_id }} \
+            -f Dockerfile.ci -t fifa-player-scout .
+
+      - name: Log in to Docker Hub
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+      - name: Tag Docker Image
+        run: |
+          docker tag fifa-player-scout ${{ secrets.DOCKER_USERNAME }}/fifa-player-scout:latest
+
+      - name: Push Docker Image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/fifa-player-scout:latest
