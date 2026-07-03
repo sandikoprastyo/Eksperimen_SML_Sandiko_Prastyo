@@ -28,7 +28,7 @@ jobs:
           pip install pandas numpy scikit-learn mlflow==2.19.0
 
       - name: Run mlflow project
-        run: cd MLProject && python modelling.py
+        run: mlflow run MLProject
 
       - name: Get latest MLflow run_id
         id: get_run_id

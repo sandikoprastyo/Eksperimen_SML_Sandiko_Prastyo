@@ -32,8 +32,6 @@ mae = mean_absolute_error(y_reg_test, y_reg_pred)
 r2 = r2_score(y_reg_test, y_reg_pred)
 print(f'Regression - MSE: {mse:.4f}, MAE: {mae:.4f}, R2: {r2:.4f}')
 
-mlflow.sklearn.autolog(disable=True)
-
 with mlflow.start_run(run_name='fifa_classifier'):
     cls_model = RandomForestClassifier(n_estimators=100, random_state=42)
     cls_model.fit(X_train, y_cls_train)
@@ -43,16 +41,6 @@ with mlflow.start_run(run_name='fifa_classifier'):
     f1 = f1_score(y_cls_test, y_cls_pred, average='weighted')
     precision = precision_score(y_cls_test, y_cls_pred, average='weighted')
     recall = recall_score(y_cls_test, y_cls_pred, average='weighted')
-
-    mlflow.log_param('model_type', 'RandomForestClassifier')
-    mlflow.log_param('n_estimators', 100)
-    mlflow.log_metric('accuracy', accuracy)
-    mlflow.log_metric('f1_score', f1)
-    mlflow.log_metric('precision', precision)
-    mlflow.log_metric('recall', recall)
-
-    mlflow.sklearn.log_model(cls_model, 'classifier_model',
-                             input_example=X_test.iloc[:5])
 
     print(f'Classification - Accuracy: {accuracy:.4f}, F1: {f1:.4f}')
     print(f'Precision: {precision:.4f}, Recall: {recall:.4f}')
